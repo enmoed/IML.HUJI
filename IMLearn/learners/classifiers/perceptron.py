@@ -31,10 +31,12 @@ class Perceptron(BaseEstimator):
             A callable to be called after each update of the model while fitting to given data
             Callable function should receive as input a Perceptron instance, current sample and current response
     """
+
     def __init__(self,
                  include_intercept: bool = True,
                  max_iter: int = 1000,
-                 callback: Callable[[Perceptron, np.ndarray, int], None] = default_callback):
+                 callback: Callable[
+                     [Perceptron, np.ndarray, int], None] = default_callback):
         """
         Instantiate a Perceptron classifier
 
@@ -73,7 +75,20 @@ class Perceptron(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
-        raise NotImplementedError()
+        self.coefs_ = np.zeros(
+            X.shape[1] + 1 if self.include_intercept_ else X.shape[1])
+        self.fitted_ = True
+        for i in range(self.max_iter_):
+            for x, y_ in zip(X, y):
+                y_pred = self._predict(x)
+                if y_pred != y_:
+                    if self.include_intercept_:
+                        self.coefs_[0] += y_
+                        self.coefs_[1:] += y_ * x
+                    else:
+                        self.coefs_ += y_ * x
+                    self.callback_(self, x, y_)
+                    break
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -89,7 +104,9 @@ class Perceptron(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            return np.sign(np.dot(X,self.coefs_[1:]) + self.coefs_[0])
+        return np.sign(np.dot(X, self.coefs_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -109,4 +126,4 @@ class Perceptron(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y, self.predict(X))

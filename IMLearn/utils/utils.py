@@ -33,8 +33,15 @@ def split_train_test(X: pd.DataFrame, y: pd.Series, train_proportion: float = .7
         Responses of test samples
 
     """
-    raise NotImplementedError()
-
+    n_samples = X.shape[0]
+    train_size = int(np.ceil(train_proportion * n_samples))
+    train_idx = np.random.choice(n_samples, train_size, replace=False)
+    test_idx = np.setdiff1d(np.arange(n_samples), train_idx)
+    train_X = X.iloc[train_idx]
+    train_y = y.iloc[train_idx]
+    test_X = X.iloc[test_idx]
+    test_y = y.iloc[test_idx]
+    return train_X, train_y, test_X, test_y
 
 def confusion_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
