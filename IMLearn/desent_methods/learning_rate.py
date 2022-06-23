@@ -32,7 +32,7 @@ class FixedLR(BaseLR):
         -----
         No arguments are expected
         """
-        raise NotImplementedError()
+        return self.base_lr
 
 
 class ExponentialLR(FixedLR):
@@ -53,6 +53,7 @@ class ExponentialLR(FixedLR):
         """
         super().__init__(base_lr)
         self.decay_rate = decay_rate
+        self.base_lr = base_lr
 
     def lr_step(self, t: int, **lr_kwargs) -> float:
         """
@@ -68,4 +69,4 @@ class ExponentialLR(FixedLR):
         eta_t: float
             Exponential decay according to eta_t = eta*gamma^t
         """
-        raise NotImplementedError()
+        return self.base_lr * np.power(self.decay_rate, t)

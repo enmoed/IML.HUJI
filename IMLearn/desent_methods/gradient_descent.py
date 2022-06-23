@@ -39,12 +39,14 @@ class GradientDescent:
         Callable function receives as input any argument relevant for the current GD iteration. Arguments
         are specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
                  max_iter: int = 1000,
                  out_type: str = "last",
-                 callback: Callable[[GradientDescent, ...], None] = default_callback):
+                 callback: Callable[
+                     [GradientDescent, ...], None] = default_callback):
         """
         Instantiate a new instance of the GradientDescent class
 
@@ -119,4 +121,29 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        weights = f.weights
+        best, total = np.copy(weights), np.copy(weights)
+        iter = 0
+        best_comp = f.compute_output(X=X, y=y)
+        for i in range(self.max_iter_):
+            eta = self.learning_rate_.lr_step(t=i)
+            grad = f.compute_jacobian(X=X, y=y)
+            change = -eta * grad
+            weights = weights + change
+            val = f.compute_output(X=X, y=y)
+            f.weights = weights
+            delta = np.linalg.norm(-change)
+            self.callback_(solver=self, weights=weights, val=val,
+                           grad=grad, t=i, eta=eta, delta=delta)
+            best, best_comp = (np.copy(weights), np.copy(val)) if\
+                                val < best_comp else (best, best_comp)
+            total += weights
+            iter = i
+            if delta <= self.tol_:
+                break
+        if self.out_type_ == "last":
+            return weights
+        elif self.out_type_ == "best":
+            return best
+        elif self.out_type_ == "average":
+            return total / iter + 1
